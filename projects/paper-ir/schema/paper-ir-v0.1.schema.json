@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:paper-ir:schema:0.1.0",
+  "title": "PaperIR v0.1",
+  "type": "object",
+  "required": ["schema_version", "paper", "source", "blocks", "items"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "0.1.0"},
+    "paper": {
+      "type": "object",
+      "required": ["id", "title"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1}
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["path", "sha256", "extraction_method"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "extraction_method": {"enum": ["utf8-paragraphs-v1", "poppler-pdftotext-layout-v1"]}
+      }
+    },
+    "blocks": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["id", "text", "location", "sha256"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "pattern": "^b[0-9]{4,}$"},
+          "text": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "location": {
+            "oneOf": [
+              {"type": "object", "required": ["page"], "additionalProperties": false,
+               "properties": {"page": {"type": "integer", "minimum": 1}}},
+              {"type": "object", "required": ["line_start", "line_end"], "additionalProperties": false,
+               "properties": {"line_start": {"type": "integer", "minimum": 1},
+                              "line_end": {"type": "integer", "minimum": 1}}}
+            ]
+          }
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["id", "kind", "status", "text", "evidence"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "pattern": "^i[0-9]{4,}$"},
+          "kind": {"enum": ["problem", "method", "assumption", "parameter", "result", "limitation", "resource"]},
+          "status": {"enum": ["supported", "inferred", "unresolved"]},
+          "text": {"type": "string", "minLength": 1},
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object", "required": ["block_id", "quote"],
+              "additionalProperties": false,
+              "properties": {
+                "block_id": {"type": "string", "pattern": "^b[0-9]{4,}$"},
+                "quote": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        },
+        "allOf": [{"if": {"properties": {"status": {"const": "supported"}}},
+                   "then": {"properties": {"evidence": {"minItems": 1}}}}]
+      }
+    }
+  }
+}

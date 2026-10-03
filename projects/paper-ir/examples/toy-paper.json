@@ -1,0 +1,82 @@
+{
+  "schema_version": "0.1.0",
+  "paper": {
+    "id": "synthetic-calibration",
+    "title": "Synthetic example: calibration workflow"
+  },
+  "source": {
+    "path": "toy-paper.md",
+    "sha256": "18f3b463d7dd1ed73f4d582e0dd0d076163dc1823a40eb7edce35bbd67b2ca91",
+    "extraction_method": "utf8-paragraphs-v1"
+  },
+  "blocks": [
+    {
+      "text": "# Synthetic example: calibration workflow",
+      "location": {
+        "line_start": 1,
+        "line_end": 1
+      },
+      "sha256": "892a4e75d29b09d0aacf0e7bd833c4f0761d7318ac1f8d56c5cfe64cbb86c59d",
+      "id": "b0001"
+    },
+    {
+      "text": "The study asks whether a calibrated sensor can estimate temperature.",
+      "location": {
+        "line_start": 3,
+        "line_end": 3
+      },
+      "sha256": "c3068026089e60184897745d1ecf6e1dbe105539011f2a46cd00240d61c29d26",
+      "id": "b0002"
+    },
+    {
+      "text": "The workflow first measures a reference sample, then adjusts the sensor offset.",
+      "location": {
+        "line_start": 5,
+        "line_end": 5
+      },
+      "sha256": "8381c3769180667b8d862239284e4e939d21d14f5f2e6e93f3c12cf093b76f74",
+      "id": "b0003"
+    },
+    {
+      "text": "The offset is fixed at 0.2 degrees during evaluation.",
+      "location": {
+        "line_start": 7,
+        "line_end": 7
+      },
+      "sha256": "193271487fa4209fc0de39d4bd0c345695bef9ff6bec47bfecc1fdca7e00045f",
+      "id": "b0004"
+    },
+    {
+      "text": "The reported mean absolute error is 0.4 degrees on the test set.",
+      "location": {
+        "line_start": 9,
+        "line_end": 9
+      },
+      "sha256": "94017e2cd238fb0095b67f839c42f459ab3ab2d9f7ae36cf57d1d75c93389d06",
+      "id": "b0005"
+    },
+    {
+      "text": "The study does not evaluate performance below zero degrees.",
+      "location": {
+        "line_start": 11,
+        "line_end": 11
+      },
+      "sha256": "0ca95caa4cf505fd27956c00922931f704bf59f04c81fcc0f0fecb9735f6ab5a",
+      "id": "b0006"
+    }
+  ],
+  "items": [
+    {
+      "id": "i0001",
+      "kind": "method",
+      "status": "supported",
+      "text": "Measure a reference sample before adjusting the offset.",
+      "evidence": [
+        {
+          "block_id": "b0003",
+          "quote": "first measures a reference sample"
+        }
+      ]
+    }
+  ]
+}

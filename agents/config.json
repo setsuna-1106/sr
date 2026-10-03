@@ -1,0 +1,12 @@
+{
+  "schema_version": "0.1.0",
+  "roles": [
+    {"id": "coordinator", "name": "协调代理", "depends_on": ["evidence", "simulation", "baseline", "red_team"]},
+    {"id": "evidence", "name": "论文证据代理", "depends_on": []},
+    {"id": "simulation", "name": "仿真代理", "depends_on": []},
+    {"id": "baseline", "name": "基线审查代理", "depends_on": ["simulation"]},
+    {"id": "red_team", "name": "红队代理", "depends_on": ["evidence", "simulation", "baseline"]}
+  ],
+  "result_statuses": ["pending", "completed", "blocked", "failed"],
+  "claim_statuses": ["supported", "inferred", "unresolved"]
+}

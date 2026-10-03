@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sr:agent-result:0.1.0",
+  "title": "sr Agent Result v0.1",
+  "type": "object",
+  "required": ["schema_version", "run_id", "role", "status", "created_at", "summary", "claims", "evidence", "metrics", "artifacts", "issues", "next_actions"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "0.1.0"},
+    "run_id": {"type": "string", "minLength": 1},
+    "role": {"enum": ["coordinator", "evidence", "simulation", "baseline", "red_team"]},
+    "status": {"enum": ["pending", "completed", "blocked", "failed"]},
+    "created_at": {"type": "string", "minLength": 1},
+    "summary": {"type": "string"},
+    "claims": {"type": "array"},
+    "evidence": {"type": "array"},
+    "metrics": {"type": "array"},
+    "artifacts": {"type": "array"},
+    "issues": {"type": "array"},
+    "next_actions": {"type": "array", "items": {"type": "string"}}
+  }
+}

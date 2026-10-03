@@ -1,0 +1,20 @@
+# Local/runtime assets
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+sync/.sr.lock
+sync/zotero.json
+library/papers/*
+!library/papers/.gitkeep
+library/inbox/*
+!library/inbox/.gitkeep
+library/notes/*
+!library/notes/.gitkeep
+outputs/**
+!outputs/drafts/
+!outputs/drafts/.gitkeep
+!outputs/releases/
+!outputs/releases/.gitkeep
