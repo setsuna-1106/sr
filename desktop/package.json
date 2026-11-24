@@ -1,0 +1,35 @@
+{
+  "name": "sr-workbench",
+  "private": true,
+  "version": "0.10.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 1420 --strictPort",
+    "build": "tsc -b && vite build",
+    "test:drafts": "node --test src/drafts.test.mjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "python3 scripts/build_worker.py && tauri build --bundles app"
+  },
+  "dependencies": {
+    "@codemirror/lang-markdown": "^6.3.2",
+    "@codemirror/view": "^6.36.4",
+    "@tauri-apps/api": "^2.3.0",
+    "@uiw/react-codemirror": "^4.25.12",
+    "katex": "^0.19.1",
+    "lucide-react": "^0.468.0",
+    "markdown-it": "^15.0.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.3.0",
+    "@types/markdown-it": "^14.1.2",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^6.3.0",
+    "typescript": "~5.7.3",
+    "vite": "^8.3.8"
+  }
+}

@@ -1,0 +1,111 @@
+.task-list { border-top: 1px solid var(--line); }
+.task-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 6px 8px 6px 2px;
+  border-bottom: 1px solid var(--separator);
+  transition: background var(--fast), border-color var(--fast);
+}
+.task-row:hover, .task-row:focus-within { background: var(--hover); }
+.task-check {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  color: var(--ready);
+}
+.task-check:hover { background: var(--accent-tint); }
+.task-check:active { transform: scale(.93); }
+.status-doing .task-check { color: var(--doing); }
+.status-waiting .task-check { color: var(--waiting); }
+.status-done .task-check { color: var(--done); }
+.status-done .task-check > svg { outline: 1px solid currentColor; border-radius: 50%; }
+.task-main { min-width: 0; min-height: 34px; text-align: left; padding: 2px 0; }
+.task-title { display: block; font-size: 14px; line-height: 1.4; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.task-main:hover .task-title { color: var(--accent); }
+.status-done .task-title { color: var(--muted); text-decoration: line-through; }
+.task-meta { display: flex; align-items: center; gap: 2px 9px; flex-wrap: wrap; margin-top: 3px; font-size: 12px; color: var(--muted); }
+.task-meta .project-label > span { white-space: normal; overflow-wrap: anywhere; }
+.task-meta-detail { overflow-wrap: anywhere; }
+.task-meta-detail::before { content: "·"; margin-right: 7px; }
+.task-trailing { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-1); }
+.task-date, .task-pin { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.task-date { white-space: nowrap; }
+.task-status {
+  --task-ink: var(--ready);
+  --task-fill: var(--ready-fill);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: var(--task-ink);
+}
+.task-status.doing { --task-ink: var(--doing); --task-fill: var(--doing-fill); }
+.task-status.done { --task-ink: var(--done); --task-fill: var(--done-fill); }
+.task-status.waiting { --task-ink: var(--waiting); --task-fill: var(--warm); }
+.task-status select {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 4px 23px 4px 8px;
+  min-height: 28px;
+  color: inherit;
+  background: var(--task-fill);
+  font-size: 12px;
+  cursor: pointer;
+}
+.task-status select:hover { border-color: var(--line); }
+.task-status > svg { position: absolute; right: 7px; pointer-events: none; }
+.task-actions-toggle { opacity: .72; }
+.task-row:is(:hover, :focus-within) .task-actions-toggle, .task-actions-toggle:has(+ :popover-open) { opacity: 1; }
+.task-actions-menu {
+  position: fixed;
+  inset: auto;
+  top: clamp(8px, var(--menu-y, 8px), calc(100dvh - 154px));
+  left: clamp(8px, calc(var(--menu-x, 178px) - 168px), calc(100vw - 176px));
+  width: 168px;
+  margin: 0;
+  padding: 5px;
+  color: var(--ink);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--card-radius);
+  box-shadow: var(--floating-shadow);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+.task-actions-menu:popover-open { display: grid; gap: 1px; animation: fade var(--fast); }
+.task-actions-menu button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 32px;
+  padding-inline: 8px;
+  text-align: left;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.task-actions-menu button:hover { color: var(--ink); background: var(--hover); }
+.task-actions-menu button:focus-visible { outline-offset: -2px; }
+.task-actions-menu button.delete-text { color: var(--danger); }
+.task-actions-menu button.delete-text:hover { background: var(--danger-fill); }
+.task-featured {
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 10px;
+  min-height: 72px;
+  padding: 11px 12px;
+  border: 1px solid var(--accent-edge);
+  border-inline-start: 3px solid var(--brand);
+  border-radius: var(--card-radius);
+  background: var(--surface);
+}
+.task-featured .task-title { font-size: 16px; }
+.task-featured .task-check { width: 38px; height: 38px; background: var(--accent-tint); }
+.task-featured:hover, .task-featured:focus-within { background: var(--surface); box-shadow: var(--panel-shadow); }
+.task-featured .task-actions-toggle { opacity: 1; }
+@media (max-width: 1050px) {
+  .task-trailing { gap: 5px; }
+}

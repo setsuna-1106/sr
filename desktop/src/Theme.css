@@ -1,0 +1,122 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif;
+  color-scheme: light;
+  color: var(--ink);
+  background: var(--paper);
+  font-size: 14px;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --page-inset: clamp(24px, 2.5vw, 32px);
+  --title-size: 32px;
+  --section-size: 20px;
+  --control-radius: 8px;
+  --card-radius: 12px;
+  --sheet-radius: 16px;
+  --toolbar-height: 48px;
+  --fast: 130ms ease-out;
+  --glass-filter: blur(18px) saturate(1.12);
+
+  --paper: #f7f8fa;
+  --surface: #fff;
+  --field-fill: #f7f8fa;
+  --ink: #202431;
+  --secondary: #495160;
+  --muted: #616a7a;
+  --line: #dadee6;
+  --separator: #e5e8ee;
+  --hover: #edf0f5;
+  --accent: #3c5bc4;
+  --accent-hover: #2c469e;
+  --accent-tint: #e9eeff;
+  --accent-edge: #a9b9ed;
+  --brand: #4668dd;
+  --brand-hover: #3656bf;
+  --on-brand: #fff;
+  --ready: #4d6178;
+  --doing: #375ab5;
+  --waiting: #785212;
+  --done: #21664d;
+  --danger: #9c3f3f;
+  --danger-fill: #faebed;
+  --danger-button: #a13543;
+  --danger-button-hover: #892632;
+  --ready-fill: #e9edf3;
+  --doing-fill: #e9eeff;
+  --warm: #f8efd9;
+  --done-fill: #e0f0e8;
+  --project-lightness: 35%;
+  --project-fill-lightness: 91%;
+  --sidebar-wash-lightness: 79%;
+  --sidebar-material: #f7f8fbd1;
+  --glass-fill: #f7f8faeb;
+  --glass-edge: #dfe3eb;
+  --overlay: #171c2b50;
+  --panel-shadow: 0 1px 4px #1d27400b;
+  --glass-shadow: 0 1px 3px #1d274010;
+  --floating-shadow: 0 6px 20px #18213923;
+  --sheet-shadow: 0 14px 56px #1821393d;
+  --inset-light: inset 0 1px 0 #ffffff3d;
+  --subtle-edge: var(--separator);
+  --card-fill: var(--surface);
+  --control-fill: var(--hover);
+  --selected-fill: var(--accent-tint);
+  --control-shadow: var(--glass-shadow);
+  --sheet-bar: var(--glass-fill);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #191c23;
+  --surface: #242832;
+  --field-fill: #1d212b;
+  --ink: #edf0f6;
+  --secondary: #c3cad8;
+  --muted: #a7b1c3;
+  --line: #39404d;
+  --separator: #323945;
+  --hover: #2d3340;
+  --accent: #a9baff;
+  --accent-hover: #c2cdff;
+  --accent-tint: #2c3654;
+  --accent-edge: #566da9;
+  --brand: #4668dd;
+  --brand-hover: #3b59be;
+  --ready: #bcc8d9;
+  --doing: #aabfff;
+  --waiting: #efca83;
+  --done: #90d4ba;
+  --danger: #ffabb2;
+  --danger-fill: #432c35;
+  --danger-button: #a13543;
+  --danger-button-hover: #892632;
+  --ready-fill: #303b49;
+  --doing-fill: #2b3755;
+  --warm: #3a3123;
+  --done-fill: #273d38;
+  --project-lightness: 76%;
+  --project-fill-lightness: 25%;
+  --sidebar-wash-lightness: 40%;
+  --sidebar-material: #252934de;
+  --glass-fill: #20242dec;
+  --glass-edge: #353c48;
+  --overlay: #00000069;
+  --panel-shadow: 0 1px 4px #00000024;
+  --glass-shadow: 0 1px 3px #00000032;
+  --floating-shadow: 0 6px 20px #00000050;
+  --sheet-shadow: 0 14px 56px #00000077;
+  --inset-light: inset 0 1px 0 #ffffff0d;
+}
+
+.project-cover, .project-dot, .sidebar-project-icon {
+  --project-tone: hsl(var(--project-hue, 222) 41% var(--project-lightness));
+  --project-fill: hsl(var(--project-hue, 222) 37% var(--project-fill-lightness));
+}
+
+.app-shell {
+  --sidebar-wash: hsl(var(--project-hue, 222) 31% var(--sidebar-wash-lightness) / .46);
+}

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>科研看板 · sr</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body class="board-page">
+<div id="research-ledger" data-theme="paper" aria-label="科研看板">
+  <section class="ledger" aria-labelledby="research-ledger-title">
+    <header class="masthead">
+      <div class="masthead-copy">
+        <p class="workspace-name">SETSUNA / sr</p>
+        <h2 id="research-ledger-title">科研看板</h2>
+      </div>
+      <div class="theme-switch" role="group" aria-label="看板外观">
+        <button class="cursor-interaction" type="button" data-appearance="paper" aria-pressed="true">稿纸</button>
+        <button class="cursor-interaction" type="button" data-appearance="chalk" aria-pressed="false">黑板</button>
+      </div>
+    </header>
+    <div class="workspace">
+      <div class="board">
+        <div class="columns" aria-label="任务状态">
+          <section class="column" data-state="ready" aria-label="待开工">
+            <h3><span class="status-dot" aria-hidden="true"></span>待开工<span class="column-count">0</span></h3>
+            <div class="tasks"></div>
+          </section>
+          <section class="column" data-state="doing" aria-label="进行中">
+            <h3><span class="status-dot" aria-hidden="true"></span>进行中<span class="column-count">0</span></h3>
+            <div class="tasks"></div>
+          </section>
+          <section class="column" data-state="waiting" aria-label="等待">
+            <h3><span class="status-dot" aria-hidden="true"></span>等待<span class="column-count">0</span></h3>
+            <div class="tasks"></div>
+          </section>
+          <section class="column" data-state="done" aria-label="已完成">
+            <h3><span class="status-dot" aria-hidden="true"></span>已完成<span class="column-count">0</span></h3>
+            <div class="tasks"></div>
+          </section>
+        </div>
+      </div>
+      <aside class="notebook" aria-label="本周安排与卡片详情">
+        <section class="focus-band" aria-labelledby="research-focus-title">
+          <div class="week"><a href="/file/projects/WEEKLY_PLAN.md" target="_blank" rel="noopener">周计划</a><span data-week-dates></span></div>
+          <div class="focus-copy">
+            <p class="focus-label" data-focus-label>本周安排</p>
+            <h3 id="research-focus-title">正在读取看板…</h3>
+            <p class="focus-next" data-focus-next></p>
+          </div>
+          <button class="focus-action cursor-interaction" type="button" disabled>开始任务</button>
+        </section>
+        <section id="research-ledger-detail" class="detail" aria-labelledby="research-ledger-detail-title" hidden>
+          <div class="detail-top">
+            <h3 id="research-ledger-detail-title"></h3>
+            <button class="detail-close cursor-interaction" type="button">收起</button>
+          </div>
+          <ul class="detail-notes" data-detail-notes></ul>
+          <div class="detail-links" data-detail-links></div>
+          <form class="edit-fields">
+            <label>状态
+              <select data-status>
+                <option value="ready">待开工</option>
+                <option value="doing">进行中</option>
+                <option value="waiting">等待</option>
+                <option value="done">已完成</option>
+              </select>
+            </label>
+            <label data-show="waiting" hidden>等待的输入<input type="text" data-field="blocker" maxlength="2048"></label>
+            <label data-show="waiting" hidden>跟进日期<input type="date" data-field="followup"></label>
+            <label>证据路径或链接<input type="text" data-field="evidence" maxlength="2048"></label>
+            <button class="detail-save" type="submit" disabled>保存详情</button>
+          </form>
+        </section>
+      </aside>
+    </div>
+    <p class="save-feedback" role="status" aria-live="polite" hidden></p>
+    <template id="task-template">
+      <button class="task" type="button" draggable="true" aria-expanded="false" aria-controls="research-ledger-detail">
+        <span class="task-meta"><span class="project"></span><span class="task-id"></span></span>
+        <span class="task-title"></span>
+        <span class="task-note"></span>
+      </button>
+    </template>
+  </section>
+</div>
+</body>
+</html>

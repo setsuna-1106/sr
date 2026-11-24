@@ -28,6 +28,8 @@ A local-first research workspace for papers, evidence, project checkpoints, and 
 | 能力 | 入口 | 用途 |
 |---|---|---|
 | 项目概览 | `sr overview` | 从文件读取文献进度、收件箱和各项目下一步 |
+| 任务看板 | `sr board` | 用浏览器查看任务、更新进度并写回 Markdown |
+| 科研工作台 | [macOS 桌面应用](desktop/README.md) | 管理项目、里程碑、任务、文献和记录，编辑原始 Markdown |
 | 文献登记 | `sr add-file` | 使用已核对元数据归档本地 PDF、登记书目与校验值 |
 | 精读卡与索引 | `sr note / status / index` | 建卡、维护阅读状态、检查索引漂移 |
 | 资产自检 | `sr doctor --verify --strict` | 检查书目、PDF、卡片、项目结构与哈希 |
@@ -50,9 +52,10 @@ python3 scripts/sr.py help
 python3 scripts/sr.py overview
 python3 scripts/sr.py doctor --verify --strict
 python3 scripts/check.py
+python3 scripts/sr.py board
 ```
 
-初始文献库为空；`paper-ir` 与 `research-system` 是工具示例项目。测试使用临时目录，不需要真实文献、运行中的 Zotero 或模型账号。
+初始文献库为空，`paper-ir` 与 `research-system` 是工具示例项目。用看板中的示例卡片试用任务流转。测试使用临时目录，无需真实文献、运行中的 Zotero 或模型账号。
 
 创建自己的项目：
 
@@ -111,7 +114,7 @@ flowchart LR
 
 ## 验证与贡献
 
-本版包含 48 项回归测试，覆盖登记失败回滚、重复 DOI、损坏 PDF、索引漂移、精确匹配、读取边界和 PaperIR 引文校验。GitHub Actions 在 macOS/Linux 上运行测试与空白工作区自检。
+本版包含 72 项 Python 回归测试，覆盖文献登记、校验与索引、PaperIR 引文检查、任务状态、保存冲突和回收恢复。GitHub Actions 在 macOS/Linux 上运行测试与工作区自检。桌面端的前端、原生层和 worker 验证入口见[构建说明](desktop/README.md)。
 
 ```bash
 python3 scripts/check.py

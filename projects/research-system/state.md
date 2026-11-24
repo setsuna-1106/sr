@@ -2,12 +2,12 @@
 
 ## Status
 
-- 阶段：工具示例可试用
-- 最后更新：2026-10-03
+- 阶段：科研工作台 v0.10.0 源码与看板示例可试用
+- 最后更新：2026-11-25
 
 ## 下一步第一件事
 
-> 运行 python3 scripts/sr.py read --help 查看本地接口；若需 Zotero，按 ZOTERO_GUIDE.md 在自己的环境检查连接。
+> 从仓库根运行 `python3 scripts/sr.py board`，用 `DEMO-01` 试用任务换列。桌面应用的构建步骤见[科研工作台](../../desktop/README.md)。
 
 ## 未销账
 

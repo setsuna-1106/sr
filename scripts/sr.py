@@ -140,10 +140,14 @@ def status(args):
 
 def find(args):
     excluded = {".git", ".venv", "venv", "__pycache__", "node_modules", ".pytest_cache"}
+    generated = {ROOT / name for name in (
+        "library/papers", "library/inbox", "desktop/dist", "desktop/src-tauri/target",
+        "desktop/src-tauri/gen", "desktop/src-tauri/resources/worker", "workbench/operations",
+    )}
     extensions = {".md", ".txt", ".bib", ".json", ".py", ".toml", ".yaml", ".yml"}
     for directory, dirs, files in os.walk(ROOT, followlinks=False):
         dirs[:] = sorted(name for name in dirs if name not in excluded and not name.startswith(".")
-                         and Path(directory, name) not in {ROOT / "library/papers", ROOT / "library/inbox"})
+                         and Path(directory, name) not in generated)
         for name in sorted(files):
             p = Path(directory, name)
             if p.suffix.lower() not in extensions or p.is_symlink() or p.stat().st_size > 2 * 1024 * 1024:
@@ -659,6 +663,10 @@ def main(argv=None):
     p.add_argument("--json", action="store_true"); p.set_defaults(fn=doctor)
     p = sub.add_parser("overview", help="show project checkpoints and library progress")
     p.add_argument("--json", action="store_true"); p.set_defaults(fn=overview)
+    p = sub.add_parser("board", help="open the local Markdown Kanban board")
+    p.add_argument("--port", type=int, default=8765, help="local port (default: 8765)")
+    p.add_argument("--no-open", action="store_true", help="print the URL without opening a browser")
+    p.set_defaults(fn=lambda args: __import__("sr_board").serve(ROOT, args))
     p = sub.add_parser("list", help="list registered papers")
     p.add_argument("--status", choices=("未建卡",) + library.READING_STATUSES)
     p.add_argument("--json", action="store_true"); p.set_defaults(fn=list_command)

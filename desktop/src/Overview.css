@@ -1,0 +1,108 @@
+.page-overview { container-type: inline-size; }
+.overview-stack { display: grid; gap: var(--space-3); }
+.overview-work, .overview-projects, .overview-queue, .distribution { min-width: 0; }
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  min-height: 32px;
+  margin-bottom: var(--space-1);
+}
+.panel-heading h2 { font-size: var(--section-size); font-weight: 640; letter-spacing: -.02em; }
+.panel-heading .text-button { flex-shrink: 0; }
+.overview-work .filter-select {
+  gap: 3px;
+  min-width: 0;
+  max-width: min(58%, 280px);
+  color: var(--secondary);
+}
+.overview-work .select-wrap { min-width: 0; }
+.overview-work .select-wrap select { font-size: 12px; text-overflow: ellipsis; padding-block: 6px; }
+.task-section { margin-top: var(--space-2); }
+.task-section h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--secondary);
+  font-size: 12px;
+  font-weight: 650;
+  margin-bottom: var(--space-1);
+}
+.task-section h3 span { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+.task-section .task-row:last-child { border-bottom-color: transparent; }
+.overview-empty {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  color: var(--muted);
+  padding: 8px 0;
+  font-size: 13px;
+}
+.overview-queue, .distribution { border-top: 1px solid var(--line); padding-top: var(--space-2); }
+.distribution .panel-heading h2 { font-size: 16px; }
+.distribution-legend { display: flex; flex-wrap: wrap; margin: 0; gap: 8px var(--space-3); }
+.distribution-legend > div, .distribution-legend dt { display: flex; align-items: center; gap: var(--space-1); }
+.distribution-legend dt { color: var(--secondary); font-size: 12px; }
+.distribution-legend dd { margin: 0; font-size: 13px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.distribution-legend .ready svg { color: var(--ready); }
+.distribution-legend .doing svg { color: var(--doing); }
+.distribution-legend .waiting svg { color: var(--waiting); }
+.distribution-legend .done svg { color: var(--done); }
+.project-previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
+  gap: var(--space-3) var(--space-2);
+}
+.project-preview {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-1);
+  text-align: left;
+  color: var(--ink);
+  border: 1px solid transparent;
+  border-radius: var(--card-radius);
+}
+.project-preview:hover { background: var(--hover); }
+.project-preview:active { background: var(--selected-fill); }
+.project-preview:hover > .project-cover { transform: translateY(-1px); }
+.project-preview > .project-cover { height: clamp(66px, 7vw, 96px); }
+.project-preview > .project-cover svg { width: 27px; height: 27px; }
+.preview-copy { min-width: 0; display: grid; gap: 2px; }
+.preview-title { font-size: 14px; font-weight: 650; line-height: 1.4; overflow-wrap: anywhere; }
+.preview-meta { color: var(--muted); font-size: 12px; }
+.preview-next {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  margin-top: 3px;
+  color: var(--secondary);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.preview-next b { font-weight: 650; margin-right: 6px; }
+.project-previews.compact {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+  gap: 6px var(--space-2);
+}
+.compact .project-preview {
+  grid-template-columns: 42px minmax(0, 1fr) 15px;
+  align-items: start;
+  gap: 12px;
+  padding: 9px 10px;
+  background: var(--surface);
+  border-color: var(--separator);
+}
+.compact .project-preview:hover { border-color: var(--accent-edge); background: var(--hover); }
+.compact .project-preview:active { background: var(--selected-fill); }
+.compact .project-cover { height: 42px; border-radius: var(--control-radius); }
+.compact .project-cover svg { width: 20px; height: 20px; }
+.compact .preview-arrow { margin-top: 3px; color: var(--muted); }
+@container (max-width: 700px) {
+  .project-previews.compact { grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)); }
+}

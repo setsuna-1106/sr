@@ -18,3 +18,18 @@ outputs/**
 !outputs/drafts/.gitkeep
 !outputs/releases/
 !outputs/releases/.gitkeep
+/workbench/
+
+# Desktop application dependencies and generated bundles
+desktop/node_modules/
+desktop/dist/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+desktop/src-tauri/resources/worker/
+desktop/src-tauri/resources/worker-staged/
+desktop/.build/
+desktop/.cache/
+desktop/.venv/
+desktop/test-results/
+desktop/playwright-report/
+desktop/*.tsbuildinfo

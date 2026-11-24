@@ -5,19 +5,14 @@
 公开仓库适合试用和贡献。保存真实科研记录前，创建独立目录，跳过公开仓库的 Git 历史；在 `sr` 根目录执行：
 
 ```bash
-python3 - <<'PY'
-from pathlib import Path
-import shutil
-source = Path.cwd()
-target = source.parent / "my-research"
-shutil.copytree(source, target, ignore=shutil.ignore_patterns(".git", "__pycache__", ".venv"))
-print(target)
-PY
+mkdir ../my-research &&
+  git archive HEAD | tar -x -C ../my-research
+
 cd ../my-research
 python3 scripts/sr.py doctor --strict
 ```
 
-目标目录已存在时复制会停止。按需要在自己的工作副本初始化 Git，并选择适合资料的可见性；填写其中的 PROFILE、书目和项目记录。不要将真实资料推送到本公开项目。
+向新目录导出当前提交中的文件。若目标目录已存在，请换一个目录名再运行。按需要在工作副本初始化 Git，并选择适合资料的可见性。填写自己的 PROFILE 和项目记录，并通过 `sr add-file` 登记文献。
 
 ## 登记 PDF
 
@@ -52,6 +47,12 @@ python3 scripts/sr.py tui demo
 ```
 
 `new` 复制 `projects/_template/`，不会替研究者填写研究判断。新项目的 `state.md` 包含占位日期与行动，填写后再运行严格检查。会话结束记录做了什么、卡在哪，并把下一步写成一个可直接执行的动作。
+
+## 任务看板与科研工作台
+
+运行 `python3 scripts/sr.py board` 打开本机浏览器看板。用示例卡片试用换列和编辑，修改会写回 [projects/KANBAN.md](../projects/KANBAN.md)。在终端按 `Ctrl+C` 停止；用 `--port` 可指定端口。
+
+macOS 桌面版支持管理项目、任务、里程碑、重点资料和记录。启动后选择包含 `projects/` 与 `library/` 的工作区目录。见[安装和构建](../desktop/README.md)。
 
 ## 日常检查
 
