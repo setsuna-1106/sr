@@ -1,21 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#38655b"/><stop offset="1" stop-color="#183c36"/>
+    <path id="tile" d="M333 76H691C785 76 839 78 893 131S948 239 948 333V691C948 785 946 839 893 893S785 948 691 948H333C239 948 185 946 131 893S76 785 76 691V333C76 239 78 185 131 131S239 76 333 76Z"/>
+    <linearGradient id="tile-face" x1=".15" y1="0" x2=".82" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".57" stop-color="#f8f4ff"/>
+      <stop offset="1" stop-color="#eae1fb"/>
     </linearGradient>
-    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="22" stdDeviation="24" flood-color="#0c241e" flood-opacity=".25"/>
+    <linearGradient id="tile-rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#d8c9ed"/>
+    </linearGradient>
+    <filter id="tile-shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="17"/>
+    </filter>
+<path id="arms" d="M284 395C334 361 364 396 363 449C362 545 393 624 493 633C605 642 675 568 710 406"/>
+    <path id="stem" d="M580 266C549 385 519 518 485 658C471 718 451 757 402 785"/>
+    <linearGradient id="ink" gradientUnits="userSpaceOnUse" x1="366" y1="320" x2="658" y2="708">
+      <stop stop-color="#ac86f8"/>
+      <stop offset=".44" stop-color="#8054ec"/>
+      <stop offset="1" stop-color="#5532bc"/>
+    </linearGradient>
+    <filter id="ink-shadow" x="200" y="205" width="600" height="670" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="14"/>
     </filter>
   </defs>
-  <rect x="58" y="58" width="908" height="908" rx="204" fill="url(#bg)"/>
-  <g filter="url(#shadow)">
-    <rect x="299" y="221" width="454" height="590" rx="41" fill="#b6c9bd" transform="rotate(9 526 516)"/>
-    <rect x="246" y="198" width="454" height="590" rx="41" fill="#f8f6ef"/>
+  <use href="#tile" transform="translate(0 15)" fill="#172e54" opacity=".23" filter="url(#tile-shadow)"/>
+  <use href="#tile" fill="url(#tile-face)" stroke="url(#tile-rim)" stroke-width="4"/>
+
+  <g transform="translate(0 12)" fill="none" stroke="#7244bf" stroke-width="68" stroke-linecap="round" opacity=".18" filter="url(#ink-shadow)">
+    <use href="#arms"/>
+    <use href="#stem"/>
   </g>
-  <path d="M322 308h198M322 352h294" stroke="#31584e" stroke-width="20" stroke-linecap="round"/>
-  <path d="M341 454v188" stroke="#b3c2b3" stroke-width="8" stroke-linecap="round"/>
-  <circle cx="341" cy="454" r="21" fill="#31584e"/>
-  <circle cx="341" cy="548" r="21" fill="#31584e"/>
-  <circle cx="341" cy="642" r="21" fill="#ccaa70"/>
-  <path d="M397 454h180M397 548h152M397 642h180" stroke="#88988a" stroke-width="15" stroke-linecap="round"/>
+  <g fill="none" stroke="url(#ink)" stroke-width="68" stroke-linecap="round">
+    <use href="#arms"/>
+    <use href="#stem"/>
+  </g>
 </svg>

@@ -118,11 +118,7 @@ def note(args):
     entry = library.require_entry(ROOT, key)
     path = ROOT / "library/notes" / f"{key}.md"
     if path.exists(): raise SystemExit(f"exists: {rel(path)}")
-    doi = entry["fields"].get("doi", "")
-    content = (f"# {key}\n\n- 状态：未读\n- 原文：\n"
-               f"  - PDF：`library/papers/{key}.pdf`\n"
-               + (f"  - DOI：https://doi.org/{library.normalized_doi(doi)}\n" if doi else "")
-               + "\n## 摘要与证据\n\n## 我的话（本人填写）\n\n## 我的推导（本人填写）\n\n## 卡点\n")
+    content = library.new_note_text(key, entry["fields"].get("doi", ""))
     library.write_files({path: content, ROOT / "library/index.md": library.index_text(ROOT, overrides={key: content})})
     print(rel(path))
 
@@ -130,11 +126,7 @@ def status(args):
     library.require_entry(ROOT, args.bibkey)
     path = ROOT / "library/notes" / f"{args.bibkey}.md"
     if not path.exists(): raise SystemExit("note not found")
-    text = path.read_text(encoding="utf-8")
-    library.note_status(text)
-    if args.value not in library.READING_STATUSES:
-        raise ValueError("invalid reading status")
-    text = library.STATUS_LINE.sub(lambda _: f"- 状态：{args.value}", text, count=1)
+    text = library.update_note_status(path.read_bytes().decode("utf-8"), args.value)
     library.write_files({path: text, ROOT / "library/index.md": library.index_text(ROOT, overrides={args.bibkey: text})})
     print(f"{args.bibkey}: {args.value}（索引已同步）")
 

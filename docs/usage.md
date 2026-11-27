@@ -30,6 +30,8 @@ python3 scripts/sr.py status YOUR_BIBKEY 粗读
 
 阅读状态为 `未读 → 粗读 → 精读中 → 已讲通`，由研究者决定何时变更。建卡不会自动填入“我的话”或“我的推导”。索引是状态的检索视图，主题与文献角色仍由人维护。
 
+桌面版可在「资产 → 文献库」按阅读状态筛选，并在列表或文献详情修改状态。首次为未建卡的文献设置状态时会创建空白精读卡，保存时同步文献索引。
+
 ```bash
 python3 scripts/sr.py list
 python3 scripts/sr.py find 关键词
@@ -52,7 +54,7 @@ python3 scripts/sr.py tui demo
 
 运行 `python3 scripts/sr.py board` 打开本机浏览器看板。用示例卡片试用换列和编辑，修改会写回 [projects/KANBAN.md](../projects/KANBAN.md)。在终端按 `Ctrl+C` 停止；用 `--port` 可指定端口。
 
-macOS 桌面版支持管理项目、任务、里程碑、重点资料和记录。启动后选择包含 `projects/` 与 `library/` 的工作区目录。见[安装和构建](../desktop/README.md)。
+macOS 桌面版支持管理项目、任务、里程碑、重点资料和记录。首次使用时选择包含 `projects/` 与 `library/` 的工作区目录，应用会进入独立的「任务看板」。以后启动时会自动恢复上次打开的工作区，并在看板显示全部任务。见[安装和构建](../desktop/README.md)。
 
 ## 日常检查
 

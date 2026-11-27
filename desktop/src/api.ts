@@ -70,13 +70,16 @@ export interface ResearchRecord {
   date?: string;
   created_at?: string;
 }
+export const readingStatuses = ["未读", "粗读", "精读中", "已讲通"] as const;
+export type ReadingStatus = (typeof readingStatuses)[number];
+
 export interface Paper {
   id?: string;
   bibkey: string;
   title: string;
   author?: string;
   year?: string | number;
-  status?: string;
+  status: ReadingStatus | "未建卡";
   pdf_path?: string;
   note_path?: string;
   path?: string;

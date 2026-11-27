@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sr_workbench import Workbench, WorkbenchError, encode_text, serve
 from sr_workbench_store import OperationStore, digest, legacy_board_update
 from sr_board import Board
+from sr_library import index_text
 
 
 BOARD = """# 科研任务看板
@@ -121,6 +122,63 @@ class WorkbenchTests(unittest.TestCase):
         before = [path.read_bytes() for path in paths]
         self.write("task.update", id="A-01", changes={"status": "done"})
         self.assertEqual(before, [path.read_bytes() for path in paths])
+
+    def test_reading_status_updates_card_and_index_and_rejects_stale_status(self):
+        bib = self.root / "library/references.bib"
+        original_bib = b"@article{sample, title={Sample title}, year={2026}}\n"
+        bib.write_bytes(original_bib)
+        note = self.root / "library/notes/sample.md"
+        original_note = "\ufeff# sample\r\n\r\n- 状态： 未读  \r\n\r\n## 我的话（本人填写）\r\n保留本人原话。\n".encode()
+        note.write_bytes(original_note)
+        index = self.root / "library/index.md"
+        index.write_text(index_text(self.root))
+        params = {"bibkey": "sample", "expected_status": "未读", "status": "精读中", "operation_id": "reading-update"}
+        result = self.write("paper.set_status", **params)
+        self.assertEqual(result["snapshot"]["papers"][0]["status"], "精读中")
+        self.assertEqual(note.read_bytes(), original_note.replace("未读".encode(), "精读中".encode()))
+        self.assertEqual(bib.read_bytes(), original_bib)
+        self.assertIn("| 精读中 |", index.read_text())
+        self.assertEqual(index.read_text(), index_text(self.root))
+        self.assertTrue(self.write("paper.set_status", **params)["replayed"])
+
+        before = self.raw_files()
+        with self.assertRaises(WorkbenchError) as caught:
+            self.write("paper.set_status", bibkey="sample", expected_status="未读", status="粗读")
+        self.assertEqual(caught.exception.code, "conflict")
+        with self.assertRaisesRegex(ValueError, "有效的阅读状态"):
+            self.write("paper.set_status", bibkey="sample", expected_status="精读中", status="未建卡")
+        self.assertEqual(self.raw_files(), before)
+
+    def test_setting_status_for_paper_without_note_can_recover_partial_save(self):
+        (self.root / "library/references.bib").write_text(
+            "@article{sample, title={Sample title}, year={2026}, doi={10.1234/sample}}\n")
+        note = self.root / "library/notes/sample.md"
+        index = self.root / "library/index.md"
+        index.write_text(index_text(self.root))
+        original_index = index.read_bytes()
+        from sr_workbench_store import durable_write
+
+        def fail_index(path, raw):
+            if path == index:
+                raise OSError("simulated interrupted index write")
+            durable_write(path, raw)
+
+        with patch("sr_workbench_store.durable_write", side_effect=fail_index):
+            with self.assertRaisesRegex(OSError, "interrupted index write"):
+                self.write("paper.set_status", bibkey="sample", expected_status="未建卡", status="粗读",
+                           operation_id="reading-interrupted")
+        self.assertIn("- 状态：粗读\n", note.read_text())
+        self.assertEqual(index.read_bytes(), original_index)
+
+        reopened = Workbench()
+        snapshot = reopened.dispatch("workspace.open", {"path": str(self.root)})
+        self.assertEqual([item["id"] for item in snapshot["recovery"]], ["reading-interrupted"])
+        result = reopened.dispatch("workspace.recover", {"operation_id": "reading-interrupted"})
+        self.assertEqual(result["results"][0]["status"], "committed")
+        self.assertEqual(index.read_text(), index_text(self.root))
+        self.assertIn("[精读卡](notes/sample.md)", index.read_text())
+        self.assertIn("https://doi.org/10.1234/sample", note.read_text())
+        self.assertIn("## 我的话（本人填写）\n\n## 我的推导（本人填写）\n\n## 卡点\n", note.read_text())
 
     def test_delete_single_card_preserves_shared_row_and_roundtrips_exact_bytes(self):
         path = self.root / "projects/KANBAN.md"

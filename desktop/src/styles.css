@@ -189,18 +189,7 @@ p {
   color: var(--secondary);
 }
 .sidebar-titlebar { position: absolute; inset: 0 0 auto; height: 39px; }
-.brand-icon {
-  width: 33px;
-  height: 33px;
-  flex-shrink: 0;
-  display: inline-grid;
-  place-items: center;
-  border: 1px solid var(--accent-edge);
-  border-radius: 10px;
-  background: var(--accent-tint);
-  box-shadow: var(--glass-shadow);
-  color: var(--accent-hover);
-}
+.brand-icon { flex-shrink: 0; }
 .sidebar nav { display: grid; gap: 12px; flex-shrink: 0; }
 .navigation-items, .sidebar-project-items { display: grid; gap: 2px; }
 .navigation-items[hidden], .sidebar-project-items[hidden] { display: none; }
@@ -388,9 +377,6 @@ p {
   line-height: 1.18;
   overflow-wrap: anywhere;
 }
-.project-views { margin-bottom: var(--space-2); }
-.project-views > button { min-height: 32px; padding: 4px 10px; }
-.project-views > button:not(.active):hover { background: var(--hover); }
 .section-toolbar {
   flex-wrap: wrap;
   display: flex;
@@ -962,8 +948,16 @@ p {
   color: var(--waiting);
   background: var(--warm);
 }
+.library-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 13px;
+}
 .library-search {
   display: flex;
+  flex: 1 1 260px;
   align-items: center;
   gap: 12px;
   border: 1px solid var(--subtle-edge);
@@ -972,7 +966,6 @@ p {
   box-shadow: var(--control-shadow);
   padding: 6px 12px;
   max-width: 530px;
-  margin-bottom: 13px;
   color: var(--muted);
 }
 .library-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
@@ -988,7 +981,15 @@ p {
 .library-search input::placeholder {
   color: var(--muted);
 }
-.library-search > span {
+.library-filters > .select-wrap select {
+  background: var(--control-fill);
+  border-color: var(--subtle-edge);
+  border-radius: var(--control-radius);
+  box-shadow: var(--control-shadow);
+  padding-left: 10px;
+  min-height: 35px;
+}
+.library-count {
   font-size: 12px;
   color: var(--muted);
   white-space: nowrap;
@@ -1033,14 +1034,17 @@ p {
   max-width: 520px;
 }
 .asset-list > .asset-row:last-child, .paper-list > .paper-row:last-child { border-bottom: 0; }
-.reading-status {
-  font-size: 11.5px;
+.paper-status-control {
+  flex: none;
+}
+.paper-status-control select {
+  font-size: 12px;
   background: var(--accent-tint);
-  border: 1px solid var(--subtle-edge);
+  border-color: var(--subtle-edge);
   border-radius: 8px;
-  padding: 4px 7px;
+  min-width: 83px;
+  padding-left: 9px;
   color: var(--accent);
-  white-space: nowrap;
 }
 .paper-details > svg {
   color: var(--accent);

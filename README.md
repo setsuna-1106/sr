@@ -29,7 +29,7 @@ A local-first research workspace for papers, evidence, project checkpoints, and 
 |---|---|---|
 | 项目概览 | `sr overview` | 从文件读取文献进度、收件箱和各项目下一步 |
 | 任务看板 | `sr board` | 用浏览器查看任务、更新进度并写回 Markdown |
-| 科研工作台 | [macOS 桌面应用](desktop/README.md) | 管理项目、里程碑、任务、文献和记录，编辑原始 Markdown |
+| 科研工作台 | [macOS 桌面应用 v0.10.8](desktop/README.md) | 启动直达任务看板，管理项目和阅读状态，编辑原始 Markdown |
 | 文献登记 | `sr add-file` | 使用已核对元数据归档本地 PDF、登记书目与校验值 |
 | 精读卡与索引 | `sr note / status / index` | 建卡、维护阅读状态、检查索引漂移 |
 | 资产自检 | `sr doctor --verify --strict` | 检查书目、PDF、卡片、项目结构与哈希 |
@@ -114,7 +114,7 @@ flowchart LR
 
 ## 验证与贡献
 
-本版包含 72 项 Python 回归测试，覆盖文献登记、校验与索引、PaperIR 引文检查、任务状态、保存冲突和回收恢复。GitHub Actions 在 macOS/Linux 上运行测试与工作区自检。桌面端的前端、原生层和 worker 验证入口见[构建说明](desktop/README.md)。
+本版包含 74 项 Python 回归测试，覆盖文献登记、阅读状态与索引、PaperIR 引文检查、任务状态、保存冲突和回收恢复。GitHub Actions 在 macOS/Linux 上运行测试与工作区自检。桌面端的前端、原生层和 worker 验证入口见[构建说明](desktop/README.md)。
 
 ```bash
 python3 scripts/check.py

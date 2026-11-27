@@ -12,7 +12,7 @@ import tempfile
 
 
 READING_STATUSES = ("未读", "粗读", "精读中", "已讲通")
-STATUS_LINE = re.compile(r"^- 状态：[ \t]*(.*)$", re.MULTILINE)
+STATUS_LINE = re.compile(r"(?:^|(?<=\r))- 状态：[ \t]*([^\r\n]*?)[ \t]*(?=\r|$)", re.MULTILINE)
 INDEX_ROW = re.compile(r"^\|\s*`([A-Za-z0-9_-]+)`\s*\|")
 
 
@@ -130,6 +130,21 @@ def note_status(text):
     if len(matches) != 1 or matches[0].strip() not in READING_STATUSES:
         raise ValueError("精读卡必须有且只有一行有效的 '- 状态：未读/粗读/精读中/已讲通'")
     return matches[0].strip()
+
+
+def new_note_text(key, doi):
+    return (f"# {key}\n\n- 状态：未读\n- 原文：\n"
+            f"  - PDF：`library/papers/{key}.pdf`\n"
+            + (f"  - DOI：https://doi.org/{normalized_doi(doi)}\n" if doi else "")
+            + "\n## 摘要与证据\n\n## 我的话（本人填写）\n\n## 我的推导（本人填写）\n\n## 卡点\n")
+
+
+def update_note_status(text, value):
+    if value not in READING_STATUSES:
+        raise ValueError("请选择有效的阅读状态")
+    note_status(text)
+    start, end = STATUS_LINE.search(text).span(1)
+    return text[:start] + value + text[end:]
 
 
 def reading_status(root, key, overrides=None):

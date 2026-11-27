@@ -12,7 +12,6 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import {
   Archive,
-  Atom,
   ArrowDownLeft,
   ArrowRight,
   ArrowUpRight,
@@ -31,6 +30,7 @@ import {
   Flag,
   Folder,
   FolderOpen,
+  Kanban,
   LayoutDashboard,
   Link2,
   ListFilter,
@@ -77,6 +77,7 @@ import {
   openPath,
   openUrl,
   projectLabels,
+  readingStatuses,
   recordLabels,
   rpc,
   taskLabels,
@@ -89,6 +90,7 @@ import type {
   Milestone,
   Paper,
   Project,
+  ReadingStatus,
   ResearchRecord,
   SearchHit,
   Snapshot,
@@ -98,6 +100,8 @@ import type {
 } from "./api";
 
 type Page = "overview" | "projects" | "board" | "assets" | "records" | "search";
+const defaultPage: Page = "board";
+const appIcon = new URL("../src-tauri/icons/icon.png", import.meta.url).href;
 type Dialog =
   | {
       type: "task";
@@ -114,10 +118,11 @@ type Dialog =
   | { type: "settings" }
   | { type: "trash" }
   | { type: "image"; path: string; dataUrl: string }
-  | { type: "paper"; paper: Paper };
+  | { type: "paper"; bibkey: string };
 const navGroups: Array<{ label: string; title?: string; items: { id: Page; label: string; icon: typeof Folder }[] }> = [
   { label: "工作区", items: [
     { id: "overview", label: "总览", icon: LayoutDashboard },
+    { id: "board", label: "任务看板", icon: Kanban },
     { id: "projects", label: "项目", icon: FolderOpen },
   ] },
   { label: "资料库", title: "资料库", items: [
@@ -128,7 +133,7 @@ const navGroups: Array<{ label: string; title?: string; items: { id: Page; label
 const pageTitles: Record<Page, string> = {
   overview: "科研总览",
   projects: "研究项目",
-  board: "研究项目",
+  board: "任务看板",
   assets: "资产与文献",
   records: "研究记录",
   search: "搜索工作区",
@@ -192,7 +197,7 @@ function relationProject(record: ResearchRecord, project: string) {
 
 export default function App() {
   const [snapshot, setSnapshotState] = useState<Snapshot | null>(null);
-  const [page, setPage] = useState<Page>("overview");
+  const [page, setPage] = useState<Page>(defaultPage);
   const [loading, setLoading] = useState(false);
   const [selectedProject, setSelectedProject] = useState("");
   const [boardScope, setBoardScope] = useState("");
@@ -202,6 +207,7 @@ export default function App() {
     "files",
   );
   const [paperQuery, setPaperQuery] = useState("");
+  const [paperStatusFilter, setPaperStatusFilter] = useState("");
   const [recordType, setRecordType] = useState("all");
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [deletion, setDeletion] = useState<DeleteSelection | null>(null);
@@ -250,7 +256,7 @@ export default function App() {
   const dirtyRef = useRef(editorDirty);
   dirtyRef.current = editorDirty;
   const searchRef = useRef<HTMLInputElement>(null);
-  const projectHeadingRef = useRef<HTMLHeadingElement>(null);
+  const sectionHeadingRef = useRef<HTMLHeadingElement>(null);
   const initialized = useRef(false);
   const fileListRequest = useRef(0);
   const notify = useCallback((message: string) => setToast(message), []);
@@ -341,7 +347,9 @@ export default function App() {
       setProjectGroup("active");
       setBoardScope("");
       setProjectFilter("");
-      setPage("overview");
+      setPaperQuery("");
+      setPaperStatusFilter("");
+      setPage(defaultPage);
       setDeletion(null);
       setEditorPath(null);
       setDialog(null);
@@ -434,6 +442,13 @@ export default function App() {
     );
     if (result) notify(`${task.id} 已移至「${taskLabels[status]}」`);
     return !!result;
+  }
+  async function changeReadingStatus(paper: Paper, status: ReadingStatus) {
+    if (working || status === paper.status) return;
+    const result = await write("paper.set_status", {
+      bibkey: paper.bibkey, status, expected_status: paper.status,
+    });
+    if (result) notify(`阅读状态已设为「${status}」`);
   }
   async function projectChange(
     project: Project,
@@ -575,6 +590,11 @@ export default function App() {
     };
   }, [query, page, snapshot?.revision, notify]);
   const current = snapshot || emptySnapshot;
+  const detailPaperKey = dialog?.type === "paper" ? dialog.bibkey : undefined;
+  const detailPaper = detailPaperKey ? current.papers.find(paper => paper.bibkey === detailPaperKey) : undefined;
+  useEffect(() => {
+    if (detailPaperKey && !detailPaper) setDialog(null);
+  }, [detailPaperKey, detailPaper]);
   const projectById = (id: string | null | undefined) =>
     current.projects.find((p) => p.id === id);
   const activeProjects = current.projects.filter(
@@ -654,22 +674,13 @@ export default function App() {
 
   useEffect(() => {
     if ((page === "projects" || page === "board") && !editorPath) {
-      projectHeadingRef.current?.focus({ preventScroll: true });
+      sectionHeadingRef.current?.focus({ preventScroll: true });
     }
-  }, [page, editorPath, detailProject?.id]);
+  }, [page, editorPath, detailProject?.id, hasWorkspace]);
 
   function openBoard(projectId = "") {
     setBoardScope(projectId);
     navigate("board");
-  }
-
-  function projectViews() {
-    return <div className="segmented project-views" role="group" aria-label="项目视图">
-      <button aria-pressed={page === "projects"} className={page === "projects" ? "active" : ""}
-        onClick={() => { if (page !== "projects") navigate("projects"); }}>项目库</button>
-      <button aria-pressed={page === "board"} className={page === "board" ? "active" : ""}
-        onClick={() => { if (page !== "board") openBoard(); }}>任务看板</button>
-    </div>;
   }
 
   function openActiveProject(project: Project) {
@@ -745,93 +756,94 @@ export default function App() {
       </div>
     );
   }
+  function renderRecoveryNotice() {
+    if (!current.recovery?.length) return null;
+    return (
+      <section className="recovery-notice">
+        <h3>有未完成的保存需要处理</h3>
+        <p>
+          资料和恢复记录已保留。继续恢复原操作，或明确保留磁盘上的当前文件。
+        </p>
+        {current.recovery.map((item) => (
+          <div key={item.id}>
+            <span>
+              {item.method || "写入操作"} ·{" "}
+              {item.status === "conflict" ? "检测到冲突" : "等待恢复"}
+            </span>
+            <button
+              className="button small"
+              disabled={working}
+              onClick={() => void recover(item.id, "resume")}
+            >
+              继续恢复
+            </button>
+            <button
+              className="button small"
+              disabled={working}
+              onClick={() => void recover(item.id, "keep_current")}
+            >
+              保留当前文件
+            </button>
+          </div>
+        ))}
+      </section>
+    );
+  }
   function renderOverview() {
     return (
-      <>
-        {current.recovery?.length ? (
-          <section className="recovery-notice">
-            <h3>有未完成的保存需要处理</h3>
-            <p>
-              资料和恢复记录已保留。继续恢复原操作，或明确保留磁盘上的当前文件。
+      <div className="overview-stack">
+        <section className="overview-work" aria-labelledby="work-title">
+          <header className="panel-heading">
+            <h2 id="work-title">继续研究</h2>
+            <label className="filter-select" title="筛选总览任务">
+              <ListFilter size={15} aria-hidden="true" />
+              <span className="sr-only">筛选总览项目</span>
+              <Select value={overviewProject?.id || ""} onChange={setProjectFilter}>
+                <option value="">全部活跃项目</option>
+                {activeProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </Select>
+            </label>
+          </header>
+          {featuredTask ? taskRow(featuredTask, true) : (
+            <p className="overview-empty">
+              {openTasks.length ? "当前任务正在等待跟进" : scopedTasks.length ? "当前任务已全部完成" : "暂无待推进的任务"}
             </p>
-            {current.recovery.map((item) => (
-              <div key={item.id}>
-                <span>
-                  {item.method || "写入操作"} ·{" "}
-                  {item.status === "conflict" ? "检测到冲突" : "等待恢复"}
-                </span>
-                <button
-                  className="button small"
-                  disabled={working}
-                  onClick={() => void recover(item.id, "resume")}
-                >
-                  继续恢复
-                </button>
-                <button
-                  className="button small"
-                  disabled={working}
-                  onClick={() => void recover(item.id, "keep_current")}
-                >
-                  保留当前文件
-                </button>
-              </div>
-            ))}
-          </section>
-        ) : null}
-        <div className="overview-stack">
-          <section className="overview-work" aria-labelledby="work-title">
-            <header className="panel-heading">
-              <h2 id="work-title">继续研究</h2>
-              <label className="filter-select" title="筛选总览任务">
-                <ListFilter size={15} aria-hidden="true" />
-                <span className="sr-only">筛选总览项目</span>
-                <Select value={overviewProject?.id || ""} onChange={setProjectFilter}>
-                  <option value="">全部活跃项目</option>
-                  {activeProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </Select>
-              </label>
-            </header>
-            {featuredTask ? taskRow(featuredTask, true) : (
-              <p className="overview-empty">
-                {openTasks.length ? "当前任务正在等待跟进" : scopedTasks.length ? "当前任务已全部完成" : "暂无待推进的任务"}
-              </p>
-            )}
-          </section>
-          <section className="overview-projects" aria-labelledby="active-projects-title">
-            <header className="panel-heading">
-              <h2 id="active-projects-title">活跃项目</h2>
-              <button className="text-button" onClick={() => { setProjectGroup("all"); navigate("projects"); }}>
-                全部项目 <ArrowRight size={14} />
+          )}
+        </section>
+        <section className="overview-projects" aria-labelledby="active-projects-title">
+          <header className="panel-heading">
+            <h2 id="active-projects-title">活跃项目</h2>
+            <button className="text-button" onClick={() => { setProjectGroup("all"); navigate("projects"); }}>
+              全部项目 <ArrowRight size={14} />
+            </button>
+          </header>
+          {activeProjects.length ? projectPreviews(activeProjects, openActiveProject, true) : (
+            <p className="overview-empty">
+              尚无活跃项目
+              <button className="text-button" onClick={() => setDialog({ type: "project" })}>
+                <Plus size={15} /> 新建项目
               </button>
-            </header>
-            {activeProjects.length ? projectPreviews(activeProjects, openActiveProject, true) : (
-              <p className="overview-empty">
-                尚无活跃项目
-                <button className="text-button" onClick={() => setDialog({ type: "project" })}>
-                  <Plus size={15} /> 新建项目
-                </button>
-              </p>
-            )}
-          </section>
-          <section className="overview-queue" aria-labelledby="queue-title">
-            <header className="panel-heading">
-              <h2 id="queue-title">任务清单</h2>
-              <button className="text-button" onClick={() => openBoard(overviewProject?.id)}>
-                查看任务看板 <ArrowUpRight size={14} />
-              </button>
-            </header>
-            {taskSection("已置顶", remainingTasks.filter(t => t.pinned), Pin)}
-            {taskSection("进行中", remainingTasks.filter(t => !t.pinned && t.status === "doing"), CircleDot)}
-            {taskSection("待开工", remainingTasks.filter(t => !t.pinned && t.status === "ready"), ArrowRight)}
-            {taskSection("等待与跟进", remainingTasks.filter(t => !t.pinned && t.status === "waiting"), Clock3)}
-            {!overviewProject && taskSection("候选与待整理", unassigned, Flag)}
-            {!remainingTasks.length && (overviewProject || !unassigned.length) && (
-              <p className="overview-empty">{featuredTask ? "暂无其他待办" : "暂无待办"}</p>
-            )}
-          </section>
-          <TaskDistribution tasks={scopedTasks} />
-        </div>
-      </>
+            </p>
+          )}
+        </section>
+        <section className="overview-queue" aria-labelledby="queue-title">
+          <header className="panel-heading">
+            <h2 id="queue-title">任务清单</h2>
+            <button className="text-button" onClick={() => openBoard(overviewProject?.id)}>
+              查看任务看板 <ArrowUpRight size={14} />
+            </button>
+          </header>
+          {taskSection("已置顶", remainingTasks.filter(t => t.pinned), Pin)}
+          {taskSection("进行中", remainingTasks.filter(t => !t.pinned && t.status === "doing"), CircleDot)}
+          {taskSection("待开工", remainingTasks.filter(t => !t.pinned && t.status === "ready"), ArrowRight)}
+          {taskSection("等待与跟进", remainingTasks.filter(t => !t.pinned && t.status === "waiting"), Clock3)}
+          {!overviewProject && taskSection("候选与待整理", unassigned, Flag)}
+          {!remainingTasks.length && (overviewProject || !unassigned.length) && (
+            <p className="overview-empty">{featuredTask ? "暂无其他待办" : "暂无待办"}</p>
+          )}
+        </section>
+        <TaskDistribution tasks={scopedTasks} />
+      </div>
     );
   }
   function renderProjects() {
@@ -870,7 +882,7 @@ export default function App() {
         <header className="project-detail-heading">
           <ProjectCover id={project.id} />
           <div className="project-detail-title">
-            <h1 id="project-title" ref={projectHeadingRef} tabIndex={-1}>{project.name}</h1>
+            <h1 id="project-title" ref={sectionHeadingRef} tabIndex={-1}>{project.name}</h1>
             <div className="project-meta">
               <span className={`project-status ${project.status}`}>
                 {project.archived ? "已归档" : projectLabels[project.status]}
@@ -1135,6 +1147,17 @@ export default function App() {
       </div>
     );
   }
+  function paperStatusSelect(paper: Paper, label: string) {
+    return (
+      <Select label={label} value={paper.status} disabled={working} onChange={(value) => {
+        const status = readingStatuses.find(status => status === value);
+        if (status) void changeReadingStatus(paper, status);
+      }}>
+        {paper.status === "未建卡" && <option disabled value="未建卡">未建卡</option>}
+        {readingStatuses.map(status => <option key={status} value={status}>{status}</option>)}
+      </Select>
+    );
+  }
   function renderAssets() {
     const assets = current.assets.filter(
       (a) => !projectFilter || a.project_ids?.includes(projectFilter),
@@ -1145,9 +1168,10 @@ export default function App() {
         (!projectFilter || a.project_ids?.includes(projectFilter)),
     );
     const papers = current.papers.filter((p) =>
+      (!paperStatusFilter || p.status === paperStatusFilter) &&
       `${p.title} ${p.bibkey} ${p.author || ""}`
         .toLowerCase()
-        .includes(paperQuery.toLowerCase()),
+        .includes(paperQuery.trim().toLowerCase()),
     );
     const inspected = listing?.entries.find(entry => entry.path === inspectedPath);
     const featuredPaths = new Set(current.assets.filter(asset => asset.featured).map(asset => asset.path));
@@ -1345,24 +1369,31 @@ export default function App() {
           ))}
         {assetTab === "papers" && (
           <>
-            <label className="library-search">
-              <Search size={16} aria-hidden="true" />
-              <input
-                type="search"
-                aria-label="搜索已登记文献"
-                value={paperQuery}
-                onChange={(e) => setPaperQuery(e.target.value)}
-                placeholder="按标题、作者或 bibkey 查找文献"
-              />
-              <span>{papers.length} 篇</span>
-            </label>
+            <div className="library-filters">
+              <label className="library-search">
+                <Search size={16} aria-hidden="true" />
+                <input
+                  type="search"
+                  aria-label="搜索已登记文献"
+                  value={paperQuery}
+                  onChange={(e) => setPaperQuery(e.target.value)}
+                  placeholder="按标题、作者或 bibkey 查找文献"
+                />
+              </label>
+              <Select label="按阅读状态筛选" value={paperStatusFilter} onChange={setPaperStatusFilter}>
+                <option value="">全部阅读状态</option>
+                {readingStatuses.map(status => <option key={status} value={status}>{status}</option>)}
+                <option value="未建卡">未建卡</option>
+              </Select>
+              <span className="library-count" aria-live="polite">{papers.length} 篇</span>
+            </div>
             <div className="paper-list">
               {papers.map((p) => (
                 <div className="paper-row" key={p.bibkey}>
                   <span className="paper-year">{p.year || "—"}</span>
                   <button
                     className="paper-main"
-                    onClick={() => setDialog({ type: "paper", paper: p })}
+                    onClick={() => setDialog({ type: "paper", bibkey: p.bibkey })}
                   >
                     <strong>{p.title}</strong>
                     <small>
@@ -1370,7 +1401,9 @@ export default function App() {
                       {p.author ? ` · ${p.author}` : ""}
                     </small>
                   </button>
-                  <span className="reading-status">{p.status || "未记录"}</span>
+                  <div className="paper-status-control">
+                    {paperStatusSelect(p, `阅读状态 · ${p.title || p.bibkey}`)}
+                  </div>
                   <button
                     className="icon-button"
                     title="打开精读卡"
@@ -1394,13 +1427,13 @@ export default function App() {
             {!papers.length && (
               <Empty
                 icon={BookOpen}
-                title="没有匹配的已登记文献"
-                description="新论文继续通过现有 sr 登记流程加入，刷新后显示。"
+                title={current.papers.length ? "没有匹配的文献" : "暂无已登记文献"}
+                description={current.papers.length ? "可以调整搜索词或阅读状态筛选。" : "通过 sr 登记论文后，刷新即可查看。"}
               />
             )}
-            <p className="bottom-note">
-              阅读状态来自精读卡。打开论文、留下讨论记录不会自动改变阅读等级。
-            </p>
+            {papers.some(paper => paper.status === "未建卡") && (
+              <p className="bottom-note">首次为未建卡的论文设置状态时，会创建空白精读卡。</p>
+            )}
           </>
         )}
       </>
@@ -1569,7 +1602,7 @@ export default function App() {
                     const paper = current.papers.find(
                       (p) => p.bibkey === hit.id || p.id === hit.id,
                     );
-                    if (paper) setDialog({ type: "paper", paper });
+                    if (paper) setDialog({ type: "paper", bibkey: paper.bibkey });
                     else if (hit.path) void viewFile({ path: hit.path });
                   } else if (hit.path) void viewFile({ path: hit.path });
                 }}
@@ -1612,7 +1645,7 @@ export default function App() {
     return (
       <div className="welcome">
         <div className="welcome-rail" data-tauri-drag-region>
-          <span className="brand-icon"><Atom size={20} aria-hidden="true" /></span>
+          <img className="brand-icon" src={appIcon} alt="" width={38} height={38} />
           <span>科研工作台</span>
         </div>
         <main className="welcome-main">
@@ -1700,7 +1733,7 @@ export default function App() {
               <div className="navigation-items" id={group.title ? "sidebar-library" : undefined}
                 hidden={!!group.title && !libraryExpanded && !collapsed}>
                 {group.items.map(({ id, label, icon: Icon }) => {
-                  const selected = !editorPath && (page === id || id === "projects" && page === "board")
+                  const selected = !editorPath && page === id
                     && !(id === "projects" && selectedShortcut && !collapsed && projectsExpanded);
                   return (
                     <button
@@ -1803,7 +1836,7 @@ export default function App() {
         ) : (
           <div className={`page page-${page}`} key={detailProject ? `project:${detailProject.id}` : page}>
             {!detailProject && <header className="page-heading">
-              <h1 ref={page === "projects" || page === "board" ? projectHeadingRef : undefined}
+              <h1 ref={page === "projects" || page === "board" ? sectionHeadingRef : undefined}
                 tabIndex={-1}>{pageTitles[page]}</h1>
               {primaryNew ? (
                 <button className="button primary" aria-keyshortcuts="Meta+N" title="⌘N" onClick={() => setDialog(primaryNew)}>
@@ -1815,7 +1848,7 @@ export default function App() {
                 </button>
               ) : null}
             </header>}
-            {!detailProject && (page === "projects" || page === "board") && projectViews()}
+            {(page === "board" || page === "overview") && renderRecoveryNotice()}
             {page === "board" ? (
               <TaskBoard
                 key={`${current.root}/${scope}`}
@@ -2052,30 +2085,27 @@ export default function App() {
           </div>
         </Modal>
       )}
-      {dialog?.type === "paper" && (
+      {detailPaper && (
         <Modal
           title="文献详情"
-          subtitle={dialog.paper.bibkey}
+          subtitle={detailPaper.bibkey}
           onClose={() => setDialog(null)}
         >
           <div className="form-body paper-details">
             <BookOpen size={26} />
-            <h2>{dialog.paper.title}</h2>
-            <p>{dialog.paper.author}</p>
+            <h2>{detailPaper.title}</h2>
+            <p>{detailPaper.author}</p>
             <div className="paper-details-meta">
-              <span>{dialog.paper.year}</span>
-              <span className="reading-status">
-                {dialog.paper.status || "未记录"}
-              </span>
+              <span>{detailPaper.year}</span>
             </div>
-            {dialog.paper.doi && (
+            {detailPaper.doi && (
               <button
                 className="text-button"
                 onClick={() =>
-                  void safeOpen(`https://doi.org/${dialog.paper.doi}`)
+                  void safeOpen(`https://doi.org/${detailPaper.doi}`)
                 }
               >
-                DOI · {dialog.paper.doi}
+                DOI · {detailPaper.doi}
                 <ArrowUpRight size={14} />
               </button>
             )}
@@ -2084,9 +2114,9 @@ export default function App() {
                 className="button primary"
                 onClick={() =>
                   void safeOpen(
-                    dialog.paper.zotero_url ||
-                      dialog.paper.pdf_path ||
-                      dialog.paper.path ||
+                    detailPaper.zotero_url ||
+                      detailPaper.pdf_path ||
+                      detailPaper.path ||
                       "",
                   )
                 }
@@ -2094,19 +2124,19 @@ export default function App() {
                 <BookOpen size={15} />
                 打开论文
               </button>
-              {dialog.paper.pdf_path && (
+              {detailPaper.pdf_path && (
                 <button
                   className="button"
-                  onClick={() => void safeOpen(dialog.paper.pdf_path!)}
+                  onClick={() => void safeOpen(detailPaper.pdf_path!)}
                 >
                   本地 PDF
                 </button>
               )}
-              {dialog.paper.note_path && (
+              {detailPaper.note_path && (
                 <button
                   className="button"
                   onClick={() => {
-                    const path = dialog.paper.note_path;
+                    const path = detailPaper.note_path;
                     setDialog(null);
                     if (path) openEditor(path);
                   }}
@@ -2115,15 +2145,18 @@ export default function App() {
                 </button>
               )}
             </div>
+            <Field label="阅读状态" hint={detailPaper.status === "未建卡" ? "首次设置时会创建空白精读卡。" : undefined}>
+              {paperStatusSelect(detailPaper, "阅读状态")}
+            </Field>
             <Field label="关联到项目">
               <Select
                 value=""
                 onChange={async (id) => {
-                  if (id && (dialog.paper.pdf_path || dialog.paper.path)) {
+                  if (id && (detailPaper.pdf_path || detailPaper.path)) {
                     const result = await write("asset.link", {
-                      path: dialog.paper.pdf_path || dialog.paper.path,
+                      path: detailPaper.pdf_path || detailPaper.path,
                       kind: "file",
-                      title: dialog.paper.title,
+                      title: detailPaper.title,
                       featured: true,
                       project_id: id,
                     });
@@ -2142,10 +2175,10 @@ export default function App() {
             <div className="section-heading">
               <h2>最近阅读记录</h2>
             </div>
-            {current.records.filter((r) => r.path.includes(dialog.paper.bibkey))
+            {current.records.filter((r) => r.path.includes(detailPaper.bibkey))
               .length ? (
               current.records
-                .filter((r) => r.path.includes(dialog.paper.bibkey))
+                .filter((r) => r.path.includes(detailPaper.bibkey))
                 .map((r) => (
                   <button
                     className="related-link"

@@ -54,7 +54,10 @@ def prepare(path: Path) -> Path:
     shutil.copytree(ROOT / "projects/_template", path / "projects/_template")
     for name in ("PROFILE.md", "lessons.md", "sync/manifest.md"):
         (path / name).write_text("# 界面与协议验收工作区\n\n仅含合成测试资料。\n")
-    (path / "library/references.bib").write_text("")
+    (path / "library/references.bib").write_text(
+        "@article{qa_existing, title={Synthetic paper with a reading note}, author={QA Author}, year={2026}}\n"
+        "@article{qa_new, title={Synthetic paper without a reading note}, year={2026}}\n")
+    (path / "library/notes/qa_existing.md").write_text("# qa_existing\n\n- 状态：未读\n\n保留测试正文。\n")
     (path / "library/index.md").write_text("# 测试文献索引\n")
     (path / "projects/KANBAN.md").write_text(BOARD)
     (path / "projects/WEEKLY_PLAN.md").write_text("# 验收排期\n")
@@ -144,6 +147,16 @@ def exercise(command: list[str], root: Path):
         assert Board(root).cards["test-01"]["status"] == "doing"
         print("PASS read-only import, inferred project/candidate separation, persisted idempotent task update")
 
+        papers = {row["bibkey"]: row for row in snap["papers"]}
+        assert papers["qa_existing"]["status"] == "未读" and papers["qa_new"]["status"] == "未建卡"
+        status_edit = {"bibkey": "qa_existing", "expected_status": "未读", "status": "精读中",
+                       "revision": client.call("workspace.snapshot")["revision"], "operation_id": str(uuid.uuid4())}
+        changed = client.call("paper.set_status", status_edit)["snapshot"]
+        assert changed["papers"][0]["status"] == "精读中"
+        assert (root / "library/notes/qa_existing.md").read_text().endswith("保留测试正文。\n")
+        assert "| 精读中 |" in (root / "library/index.md").read_text()
+        print("PASS persisted reading status and synchronized index through worker protocol")
+
         server = ThreadingHTTPServer(("127.0.0.1", 0), BoardHandler)
         server.root = root
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -195,6 +208,7 @@ def exercise(command: list[str], root: Path):
     reopened = Client(command)
     try:
         snap = reopened.call("workspace.open", {"path": str(root)})
+        assert snap["papers"][0]["status"] == "精读中"
         task = next(t for t in snap["tasks"] if t["id"].upper() == "TEST-01")
         assert task["status"] == "done" and task["pinned"]
         saved_board = (root / BOARD_PATH).read_bytes()

@@ -644,6 +644,29 @@ class Workbench:
                 updates[journal] = encode_text(decode_text(raw).rstrip() + addition, raw)
         return {"id": key, "path": str(self.stored_path(item["path"]))}
 
+    def edit_reading_status(self, params, snapshot, updates):
+        key, status = params.get("bibkey"), params.get("status")
+        paper = next((row for row in snapshot["papers"] if row["bibkey"] == key), None)
+        if paper is None:
+            raise WorkbenchError("not_found", "未找到已登记的文献")
+
+        note = self.root / "library/notes" / (key + ".md")
+        index = self.root / "library/index.md"
+        for path in (note, index):
+            if path.resolve() != path:
+                raise WorkbenchError("forbidden", "精读卡和文献索引的路径不能包含软链接")
+        raw_note, raw_index = raw_at(note), raw_at(index)
+        text = decode_text(raw_note) if raw_note is not None else library.new_note_text(key, paper["doi"])
+        current_status = library.note_status(text) if raw_note is not None else "未建卡"
+        if current_status != params.get("expected_status"):
+            raise WorkbenchError("conflict", "阅读状态已变更，请核对最新状态后重试")
+
+        updated = library.update_note_status(text, status)
+        bom = b"\xef\xbb\xbf" if raw_note is not None and raw_note.startswith(b"\xef\xbb\xbf") else b""
+        updates[note] = bom + updated.encode("utf-8")
+        updates[index] = library.index_text(self.root, overrides={key: updated})
+        return {"bibkey": key, "status": status}, {note: digest(raw_note), index: digest(raw_index)}
+
     def mutate(self, method, params):
         self.require_open()
         operation_id = params.get("operation_id")
@@ -677,6 +700,8 @@ class Workbench:
                 result = self.edit_asset(method, params, meta, snapshot)
             elif method.startswith("record."):
                 result = self.edit_record(method, params, meta, snapshot, updates)
+            elif method == "paper.set_status":
+                result, expected = self.edit_reading_status(params, snapshot, updates)
             elif method == "files.save":
                 path = self.resolve(params.get("path", ""))
                 self.authorize_write(path)
@@ -783,7 +808,7 @@ class Workbench:
                 return {"snapshot": self.snapshot(), "results": results}
         if method in {"task.delete", "project.delete", "trash.restore",
                       "task.create", "task.update", "project.create", "project.update", "milestone.create", "milestone.update",
-                      "asset.link", "asset.update", "record.create", "record.update", "files.save"}:
+                      "asset.link", "asset.update", "record.create", "record.update", "paper.set_status", "files.save"}:
             return self.mutate(method, params)
         raise WorkbenchError("method_not_found", "未知方法：" + str(method))
 
