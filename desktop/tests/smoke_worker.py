@@ -129,6 +129,8 @@ def exercise(command: list[str], root: Path):
         before = hashes(root)
         snap = client.call("workspace.open", {"path": str(root)})
         client.call("workspace.snapshot")
+        assert client.call("paper.citations") == {"edges": [], "coverage": {"qa_existing": "no_doi", "qa_new": "no_doi"},
+                                                   "progress": None}
         assert before == hashes(root), "read-only opening changed source files"
         assert len(snap["projects"]) == 1 and len(snap["tasks"]) == 2, snap
         project_id = snap["projects"][0]["id"]

@@ -32,6 +32,8 @@ python3 scripts/sr.py status YOUR_BIBKEY 粗读
 
 桌面版可在「资产 → 文献库」按阅读状态筛选，并在列表或文献详情修改状态。首次为未建卡的文献设置状态时会创建空白精读卡，保存时同步文献索引。
 
+切换到「关系网络」可查看库内论文的共同署名和直接引用。共同署名读取本地书目，引用数据在点击「更新引文」后按 DOI 查询。将指针移到图谱上，使用 Mac 触控板双指张开或捏合即可缩放。数据来源与缓存说明见[科研工作台](../desktop/README.md#使用)。
+
 ```bash
 python3 scripts/sr.py list
 python3 scripts/sr.py find 关键词

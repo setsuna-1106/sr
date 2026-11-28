@@ -14,6 +14,7 @@ import uuid
 
 import sr_board
 import sr_library as library
+from sr_workbench_citations import CitationNetwork
 from sr_workbench_trash import delete_items, restore_items
 from sr_workbench_store import OperationStore, WorkbenchError, digest, json_bytes, raw_at, stamp
 
@@ -124,6 +125,7 @@ def write_task_notes(board, key, content):
 class Workbench:
     def __init__(self):
         self.root = None
+        self.citations = CitationNetwork()
 
     def require_open(self):
         if self.root is None:
@@ -767,13 +769,23 @@ class Workbench:
                 raise WorkbenchError("invalid", "请选择含 projects 和 library 的科研工作区")
             previous, self.root = self.root, path
             try:
-                return self.snapshot()
+                snapshot = self.snapshot()
             except BaseException:
                 self.root = previous
                 raise
+            if previous and previous != path:
+                self.citations.cancel(previous)
+            return snapshot
         self.require_open()
         if method == "workspace.snapshot":
             return self.snapshot()
+        if method == "paper.citations":
+            return self.citations.view(self.root)
+        if method == "paper.citations_refresh":
+            return self.citations.start(self.root)
+        if method == "paper.citations_cancel":
+            self.citations.cancel(self.root)
+            return self.citations.view(self.root)
         if method == "files.list":
             return self.file_list(params)
         if method == "files.read":

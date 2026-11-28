@@ -6,8 +6,10 @@ from pathlib import Path
 import shutil
 import sys
 from tempfile import TemporaryDirectory
+from threading import Event
 import unittest
 from unittest.mock import patch
+from urllib.error import HTTPError
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -15,6 +17,7 @@ from sr_workbench import Workbench, WorkbenchError, encode_text, serve
 from sr_workbench_store import OperationStore, digest, legacy_board_update
 from sr_board import Board
 from sr_library import index_text
+from sr_workbench_citations import fetch_references
 
 
 BOARD = """# 科研任务看板
@@ -122,6 +125,88 @@ class WorkbenchTests(unittest.TestCase):
         before = [path.read_bytes() for path in paths]
         self.write("task.update", id="A-01", changes={"status": "done"})
         self.assertEqual(before, [path.read_bytes() for path in paths])
+
+    def test_citations_match_registered_dois_and_reopen_offline(self):
+        bib = self.root / "library/references.bib"
+        original = ("@article{source, title={Source}, doi={10.1234/source}}\n"
+                    "@article{target, title={Target}, doi={https://doi.org/10.1234/Target}}\n"
+                    "@article{absent, title={Absent}, doi={10.48550/arXiv.2401.00001}}\n"
+                    "@article{no_doi, title={No DOI}}\n").encode()
+        bib.write_bytes(original)
+        before = self.raw_files()
+        references = {
+            "10.1234/source": ["10.1234/target", "10.1234/target", "10.1234/source", "10.1234/outside"],
+            "10.1234/target": [], "10.48550/arxiv.2401.00001": None,
+        }
+        with patch("sr_workbench_citations.fetch_references", side_effect=references.__getitem__) as lookup:
+            pending = self.worker.dispatch("paper.citations", {})
+            self.assertEqual(pending["edges"], [])
+            self.assertEqual(pending["coverage"]["source"], "pending")
+            self.assertEqual(pending["coverage"]["no_doi"], "no_doi")
+            self.assertEqual(before, self.raw_files())
+            lookup.assert_not_called()
+            self.worker.dispatch("paper.citations_refresh", {"doi": "10.4321/unregistered"})
+            self.worker.citations.thread.join(timeout=4)
+            result = self.worker.dispatch("paper.citations", {})
+            self.assertEqual(result["progress"]["state"], "complete")
+            self.assertEqual(result["progress"]["done"], 3)
+            self.assertEqual(result["edges"], [{"source": "source", "target": "target"}])
+            self.assertEqual(result["coverage"], {"source": "available", "target": "no_references",
+                                                  "absent": "not_indexed", "no_doi": "no_doi"})
+            self.assertEqual(lookup.call_count, 3)
+            self.assertEqual(self.worker.dispatch("paper.citations_refresh", {})["progress"]["state"], "current")
+            self.assertEqual(lookup.call_count, 3)
+        fresh_worker = Workbench()
+        fresh_worker.dispatch("workspace.open", {"path": str(self.root)})
+        self.assertEqual(fresh_worker.dispatch("paper.citations", {})["edges"], result["edges"])
+        self.assertEqual(bib.read_bytes(), original)
+        self.assertEqual(before, {name: data for name, data in self.raw_files().items()
+                                  if not name.startswith("workbench/citations/")})
+
+    def test_citations_keep_progress_after_stop_and_retry(self):
+        (self.root / "library/references.bib").write_text(
+            "@article{source, title={Source}, doi={10.1234/source}}\n"
+            "@article{target, title={Target}, doi={10.1234/target}}\n")
+        began, release = Event(), Event()
+
+        def paused(doi):
+            began.set()
+            release.wait(timeout=4)
+            return ["10.1234/target"]
+
+        with patch("sr_workbench_citations.fetch_references", side_effect=paused) as lookup:
+            self.worker.dispatch("paper.citations_refresh", {})
+            try:
+                self.assertTrue(began.wait(timeout=2))
+                self.assertEqual(len(self.worker.dispatch("workspace.snapshot", {})["papers"]), 2)
+                self.worker.dispatch("paper.citations_cancel", {})
+            finally:
+                release.set()
+                self.worker.citations.thread.join(timeout=4)
+            self.assertEqual(lookup.call_count, 1)
+        saved = self.worker.dispatch("paper.citations", {})
+        self.assertEqual(saved["progress"]["state"], "cancelled")
+        self.assertEqual(saved["edges"], [{"source": "source", "target": "target"}])
+        with patch("sr_workbench_citations.fetch_references", side_effect=ValueError("offline")) as lookup:
+            self.worker.dispatch("paper.citations_refresh", {})
+            self.worker.citations.thread.join(timeout=4)
+            lookup.assert_called_once_with("10.1234/target")
+        retried = self.worker.dispatch("paper.citations", {})
+        self.assertEqual(retried["progress"]["state"], "failed")
+        self.assertEqual(retried["edges"], saved["edges"])
+
+    def test_citation_lookup_requires_matching_metadata(self):
+        response = io.BytesIO(json.dumps({"message": {"DOI": "10.1234/Source", "reference": [
+            {"DOI": "https://doi.org/10.1234/X"}, {"unstructured": "Unverified title"}, {"DOI": "10.1234/x"}
+        ]}}).encode())
+        with patch("sr_workbench_citations.urlopen", return_value=response) as request:
+            self.assertEqual(fetch_references("10.1234/source"), ["10.1234/x"])
+            self.assertEqual(request.call_args.args[0].full_url, "https://api.crossref.org/works/10.1234%2Fsource")
+        with patch("sr_workbench_citations.urlopen", return_value=io.BytesIO(b'{"message":{"DOI":"10.1234/wrong"}}')):
+            with self.assertRaisesRegex(ValueError, "无法核对"):
+                fetch_references("10.1234/source")
+        with patch("sr_workbench_citations.urlopen", side_effect=HTTPError("", 404, "Not found", {}, None)):
+            self.assertIsNone(fetch_references("10.1234/source"))
 
     def test_reading_status_updates_card_and_index_and_rejects_stale_status(self):
         bib = self.root / "library/references.bib"

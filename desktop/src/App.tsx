@@ -36,6 +36,7 @@ import {
   ListFilter,
   LoaderCircle,
   MoreHorizontal,
+  Network,
   PanelLeftClose,
   PanelLeftOpen,
   PanelRight,
@@ -65,6 +66,7 @@ import { FileInspector, fileViewKind, formatFileSize } from "./FileInspector";
 import "./Overview.css";
 import { TaskRow } from "./TaskRow";
 import { TaskBoard, unassignedScope } from "./TaskBoard";
+import { CitationNetwork } from "./CitationNetwork";
 import { DeleteConfirmation, TrashDialog, type DeleteSelection } from "./Trash";
 const Editor = lazy(() => import("./Editor"));
 import type { EditorHandle } from "./Editor";
@@ -208,6 +210,8 @@ export default function App() {
   );
   const [paperQuery, setPaperQuery] = useState("");
   const [paperStatusFilter, setPaperStatusFilter] = useState("");
+  const [paperView, setPaperView] = useState<"list" | "network">("list");
+  const [networkPaper, setNetworkPaper] = useState("");
   const [recordType, setRecordType] = useState("all");
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [deletion, setDeletion] = useState<DeleteSelection | null>(null);
@@ -349,6 +353,8 @@ export default function App() {
       setProjectFilter("");
       setPaperQuery("");
       setPaperStatusFilter("");
+      setPaperView("list");
+      setNetworkPaper("");
       setPage(defaultPage);
       setDeletion(null);
       setEditorPath(null);
@@ -1158,6 +1164,16 @@ export default function App() {
       </Select>
     );
   }
+  function showPaperNetwork(bibkey: string) {
+    guard(() => {
+      setEditorPath(null);
+      setPage("assets");
+      setAssetTab("papers");
+      setPaperView("network");
+      setNetworkPaper(bibkey);
+      setDialog(null);
+    });
+  }
   function renderAssets() {
     const assets = current.assets.filter(
       (a) => !projectFilter || a.project_ids?.includes(projectFilter),
@@ -1368,6 +1384,20 @@ export default function App() {
             />
           ))}
         {assetTab === "papers" && (
+          <div className="library-view-switch">
+            <div className="segmented" role="group" aria-label="文献库视图">
+              <button aria-pressed={paperView === "list"} className={paperView === "list" ? "active" : ""}
+                onClick={() => setPaperView("list")}><BookOpen size={14} />文献列表</button>
+              <button aria-pressed={paperView === "network"} className={paperView === "network" ? "active" : ""}
+                onClick={() => setPaperView("network")}><Network size={14} />关系网络</button>
+            </div>
+          </div>
+        )}
+        {assetTab === "papers" && paperView === "network" && (
+          <CitationNetwork key={current.root} papers={current.papers} selectedKey={networkPaper}
+            onSelect={setNetworkPaper} onDetails={bibkey => setDialog({ type: "paper", bibkey })} />
+        )}
+        {assetTab === "papers" && paperView === "list" && (
           <>
             <div className="library-filters">
               <label className="library-search">
@@ -2142,6 +2172,11 @@ export default function App() {
                   }}
                 >
                   精读卡
+                </button>
+              )}
+              {!(page === "assets" && assetTab === "papers" && paperView === "network" && networkPaper === detailPaper.bibkey) && (
+                <button className="button" onClick={() => showPaperNetwork(detailPaper.bibkey)}>
+                  <Network size={15} />关系网络
                 </button>
               )}
             </div>

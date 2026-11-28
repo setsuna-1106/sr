@@ -39,7 +39,8 @@ def main() -> None:
     if not entry.is_file():
         raise SystemExit(f"Worker entrypoint does not exist: {entry}")
     sources = [ROOT / "scripts" / name for name in
-               ("sr_workbench.py", "sr_workbench_store.py", "sr_workbench_trash.py", "sr_library.py", "sr_board.py")]
+               ("sr_workbench.py", "sr_workbench_store.py", "sr_workbench_trash.py", "sr_workbench_citations.py",
+                "sr_library.py", "sr_board.py")]
     def source_hashes() -> dict[str, str]:
         return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
                 for path in sources}
